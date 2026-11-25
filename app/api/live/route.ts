@@ -73,6 +73,8 @@ export async function GET() {
           at: last.createdAt
         }
       : null;
+    const finished = doneTasks.size === taskIds.length;
+    const finishedAt = finished && last ? last.createdAt.getTime() : null;
     return {
       id: p.id,
       alias: p.alias,
@@ -83,16 +85,20 @@ export async function GET() {
       accuracy,
       activeTask,
       taskStrip,
-      lastGain
+      lastGain,
+      finishedAt
     };
   });
 
-  rows.sort(
-    (a, b) =>
-      b.points - a.points ||
-      b.firstTries - a.firstTries ||
-      a.alias.localeCompare(b.alias)
-  );
+  rows.sort((a, b) => {
+    if (b.points !== a.points) return b.points - a.points;
+    // Both finished: who finished earlier wins
+    if (a.finishedAt && b.finishedAt) return a.finishedAt - b.finishedAt;
+    if (a.finishedAt) return -1;
+    if (b.finishedAt) return 1;
+    if (b.firstTries !== a.firstTries) return b.firstTries - a.firstTries;
+    return a.alias.localeCompare(b.alias);
+  });
 
   const events = recent.map((a) => ({
     id: a.id,

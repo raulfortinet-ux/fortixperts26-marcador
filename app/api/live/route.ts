@@ -75,6 +75,9 @@ export async function GET() {
       : null;
     const finished = doneTasks.size === taskIds.length;
     const finishedAt = finished && last ? last.createdAt.getTime() : null;
+    const durationSec = finished && p.attempts.length
+      ? Math.round((last!.createdAt.getTime() - p.attempts[0].createdAt.getTime()) / 1000)
+      : null;
     return {
       id: p.id,
       alias: p.alias,
@@ -86,7 +89,8 @@ export async function GET() {
       activeTask,
       taskStrip,
       lastGain,
-      finishedAt
+      finishedAt,
+      durationSec
     };
   });
 

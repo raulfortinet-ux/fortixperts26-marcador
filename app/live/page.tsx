@@ -13,7 +13,14 @@ type Row = {
   activeTask: number | null;
   taskStrip: { id: number; done: boolean; active: boolean }[];
   lastGain: { points: number; isCorrect: boolean; taskId: number | null; attempt: number; at: string } | null;
+  durationSec: number | null;
 };
+function fmtDur(s: number | null) {
+  if (s == null) return "";
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}m ${r.toString().padStart(2, "0")}s`;
+}
 type Event = {
   id: string;
   at: string;
@@ -193,7 +200,11 @@ export default function LivePage() {
                     <div>
                       <div className="name">{r.alias}</div>
                       <div className="sub">
-                        {activeId ? `Tarea ${activeId}` : r.tasksDone === taskCount ? "✓ terminado" : "—"}
+                        {activeId
+                          ? `Tarea ${activeId}`
+                          : r.tasksDone === taskCount
+                            ? `✓ terminado${r.durationSec != null ? " · " + fmtDur(r.durationSec) : ""}`
+                            : "—"}
                       </div>
                     </div>
                   </div>

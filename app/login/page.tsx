@@ -1,11 +1,19 @@
 "use client";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Image from "next/image";
 import { Footer } from "../brand";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen" />}>
+      <LoginInner />
+    </Suspense>
+  );
+}
+
+function LoginInner() {
   const router = useRouter();
   const params = useSearchParams();
   const [alias, setAlias] = useState("");

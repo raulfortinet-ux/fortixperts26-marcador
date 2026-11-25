@@ -4,7 +4,14 @@ import { useEffect, useState } from "react";
 import { FortinetBar, Footer } from "../brand";
 
 type Participant = { id: string; alias: string; createdAt: string };
-type Row = { id: string; alias: string; points: number; solved: number; firstTries: number; tasks: number; accuracy: number };
+type Row = { id: string; alias: string; points: number; solved: number; firstTries: number; tasks: number; accuracy: number; durationSec: number | null };
+
+function fmtDuration(s: number | null) {
+  if (s == null) return "—";
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}m ${r.toString().padStart(2, "0")}s`;
+}
 
 export default function AdminPage() {
   const [participants, setParticipants] = useState<Participant[]>([]);
@@ -160,11 +167,12 @@ export default function AdminPage() {
                   <th>1ª</th>
                   <th>Tareas</th>
                   <th>Precisión</th>
+                  <th>Tiempo</th>
                 </tr>
               </thead>
               <tbody>
                 {scoreboard.length === 0 ? (
-                  <tr><td colSpan={6} className="text-center text-[var(--muted)] py-8">Esperando participantes…</td></tr>
+                  <tr><td colSpan={7} className="text-center text-[var(--muted)] py-8">Esperando participantes…</td></tr>
                 ) : scoreboard.map((r, i) => (
                   <tr key={r.id}>
                     <td className="pos">{i + 1}</td>
@@ -173,6 +181,7 @@ export default function AdminPage() {
                     <td>{r.firstTries}</td>
                     <td>{r.tasks}/8</td>
                     <td>{r.accuracy}%</td>
+                    <td className="mono">{fmtDuration(r.durationSec)}</td>
                   </tr>
                 ))}
               </tbody>

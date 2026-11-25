@@ -7,11 +7,14 @@ export async function getScoreboard() {
       id: true,
       alias: true,
       attempts: {
-        select: { pointsAwarded: true, isCorrect: true, questionId: true }
+        select: { pointsAwarded: true, isCorrect: true, questionId: true, createdAt: true },
+        orderBy: { createdAt: "asc" }
       },
       progress: { select: { taskId: true } }
     }
   });
+
+  const totalTasks = await prisma.task.count();
 
   const rows = players.map((p) => {
     const points = p.attempts.reduce((a, b) => a + b.pointsAwarded, 0);
@@ -19,6 +22,14 @@ export async function getScoreboard() {
     const tries = p.attempts.length;
     const firstTries = p.attempts.filter((a) => a.isCorrect && a.pointsAwarded === 10).length;
     const accuracy = tries ? Math.round((solved / tries) * 100) : 0;
+    const finished = p.progress.length === totalTasks && tries > 0;
+    const durationSec = finished
+      ? Math.round(
+          (p.attempts[p.attempts.length - 1].createdAt.getTime() -
+            p.attempts[0].createdAt.getTime()) /
+            1000
+        )
+      : null;
     return {
       id: p.id,
       alias: p.alias,
@@ -26,11 +37,20 @@ export async function getScoreboard() {
       solved,
       firstTries,
       tasks: p.progress.length,
-      accuracy
+      accuracy,
+      durationSec,
+      finishedAt: finished ? p.attempts[p.attempts.length - 1].createdAt.getTime() : null
     };
   });
 
-  rows.sort((a, b) => b.points - a.points || b.firstTries - a.firstTries || a.alias.localeCompare(b.alias));
+  rows.sort((a, b) => {
+    if (b.points !== a.points) return b.points - a.points;
+    if (a.finishedAt && b.finishedAt) return a.finishedAt - b.finishedAt;
+    if (a.finishedAt) return -1;
+    if (b.finishedAt) return 1;
+    if (b.firstTries !== a.firstTries) return b.firstTries - a.firstTries;
+    return a.alias.localeCompare(b.alias);
+  });
   return rows;
 }
 

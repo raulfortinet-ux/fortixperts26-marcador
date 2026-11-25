@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  alias        String   @unique
+  passwordHash String
+  role         String   @default("PLAYER") // "ADMIN" | "PLAYER"
+  createdAt    DateTime @default(now())
+  attempts     Attempt[]
+  progress     TaskProgress[]
+}
+
+model Task {
+  id        Int       @id
+  title     String
+  moment    String
+  severity  String
+  summary   String
+  questions Question[]
+  progress  TaskProgress[]
+}
+
+model Question {
+  id         Int       @id @default(autoincrement())
+  taskId     Int
+  order      Int
+  prompt     String
+  options    String    // JSON: [{key:"a",label:"..."},...]
+  correctKey String
+  rationale  String
+  task       Task      @relation(fields: [taskId], references: [id])
+  attempts   Attempt[]
+
+  @@index([taskId, order])
+}
+
+model Attempt {
+  id             String   @id @default(cuid())
+  userId         String
+  questionId     Int
+  chosenKey      String
+  isCorrect      Boolean
+  pointsAwarded  Int
+  attemptNumber  Int
+  createdAt      DateTime @default(now())
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, questionId])
+}
+
+model TaskProgress {
+  id          String   @id @default(cuid())
+  userId      String
+  taskId      Int
+  completedAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, taskId])
+}
